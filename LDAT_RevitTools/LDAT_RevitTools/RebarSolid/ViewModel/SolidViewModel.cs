@@ -85,7 +85,6 @@ namespace RebarSolid.ViewModel
                     }
                     tx.Commit();
                 }
-                // Now we will check tool first with external tools
             }
             else
             {

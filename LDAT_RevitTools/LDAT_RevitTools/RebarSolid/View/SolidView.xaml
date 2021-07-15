@@ -8,7 +8,8 @@
              FontSize="14"
              Title="Rebar Solid"
              Height="140" Width="300"
-        WindowStartupLocation="CenterScreen">
+            ResizeMode="NoResize"
+            WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
