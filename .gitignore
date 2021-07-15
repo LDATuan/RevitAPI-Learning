@@ -1,0 +1,71 @@
+# Prerequisites
+*.d
+*/**/bin/Debug 2019
+*/**/bin/Debug
+*/**/bin/2017
+*/**/bin/2018
+*/**/bin/2019
+*/**/bin/2020
+*/**/bin/2021
+*/**/bin/Release
+*/**/obj/Debug
+*/**/obj/2017
+*/**/obj/2018
+*/**/obj/2019
+*/**/obj/2020
+*/**/obj/2021
+*/**/obj/Release
+*/**/obj/Debug 2019
+
+.vs/
+
+*.cache
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Linker output
+*.ilk
+*.map
+*.exp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Kernel Module Compile Results
+*.mod*
+*.cmd
+.tmp_versions/
+modules.order
+Module.symvers
+Mkfile.old
+dkms.conf

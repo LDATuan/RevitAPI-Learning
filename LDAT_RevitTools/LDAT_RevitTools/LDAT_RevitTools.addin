@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RevitTools</Name>
+    <Assembly>LDAT_RevitTools/LDAT_RevitTools.dll</Assembly>
+    <AddInId>DC5D4D3D-220D-47C3-AB7F-515DB23AC83F</AddInId>
+    <FullClassName>App</FullClassName>
+    <VendorId>ADSK</VendorId>
+    <VendorDescription>LDAT</VendorDescription>
+  </AddIn>
+</RevitAddIns>

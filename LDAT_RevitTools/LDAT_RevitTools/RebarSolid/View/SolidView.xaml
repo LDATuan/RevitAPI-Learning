@@ -1,0 +1,23 @@
+﻿<Window x:Class="RebarSolid.View.SolidView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             FontFamily="Cambria Math"
+             FontSize="14"
+             Title="Rebar Solid"
+             Height="140" Width="300"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" Margin="15">
+            <CheckBox Content="Solid In View" IsChecked="{Binding IsCheckedSolid}"/>
+            <CheckBox Content="UnobscuredInView" IsChecked="{Binding IsCheckedUnobscured}" Margin="10 0"/>
+        </StackPanel>
+        <Button Content="Run" Grid.Row="1" Height="30" Command="{Binding ButtonRun}"/>
+    </Grid>
+</Window>
