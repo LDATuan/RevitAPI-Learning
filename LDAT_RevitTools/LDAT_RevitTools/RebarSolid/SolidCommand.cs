@@ -15,8 +15,7 @@ public class SolidCommand : IExternalCommand
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
     {
         var uidoc = commandData.Application.ActiveUIDocument;
-        var doc = uidoc.Document;
-        var vm = new SolidViewModel(doc);
+        var vm = new SolidViewModel(uidoc);
         vm.SolidView.ShowDialog();
         return Result.Succeeded;
     }
