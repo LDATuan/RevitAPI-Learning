@@ -22,4 +22,10 @@
 		<PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="$(RevitVersion).*" />
 		<PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="$(RevitVersion).*" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="RebarDetailItem\Views\" />
+	  <Folder Include="RebarDetailItem\ViewModels\" />
+	  <Folder Include="RebarDetailItem\Models\" />
+	</ItemGroup>
 </Project>
