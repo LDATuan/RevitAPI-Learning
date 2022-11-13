@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Utilities;
 
 namespace RebarDetailItem.Utilities;
 
@@ -45,12 +46,12 @@ public static class RebarUtils
         return parameterValues;
     }
 
-    private static (double?,double?) GetHookLengths(Rebar rebar)
+    private static (double?, double?) GetHookLengths(Rebar rebar)
     {
         var rebarBendData = rebar.GetBendData();
 
         double? hookLengthStart = null;
-        if (rebarBendData.HookLength0> 0)
+        if (rebarBendData.HookLength0 > 0)
         {
             hookLengthStart = rebar.get_Parameter(BuiltInParameter.REBAR_SHAPE_START_HOOK_LENGTH).AsDouble();
         }
@@ -64,7 +65,36 @@ public static class RebarUtils
         return (hookLengthStart, hookLengthEnd);
     }
 
-    public static List<double> GetParameterValues(Rebar rebar)
+    private static List<double> RoundingNumber(this RebarRoundingManager rebarRoundingManager, List<double> parameterValues)
+    {
+        var valueRounds = new List<double>();
+        var roundingNumber = rebarRoundingManager.ApplicableSegmentLengthRounding;
+        if (roundingNumber.IsEqual(0)) roundingNumber = 1;
+
+        foreach (var parameterValue in parameterValues)
+        {
+            double value;
+            switch (rebarRoundingManager.ApplicableSegmentLengthRoundingMethod)
+            {
+                case RoundingMethod.Nearest:
+                    value = Math.Round(parameterValue / roundingNumber) * roundingNumber;
+                    break;
+                case RoundingMethod.Up:
+                    value = Math.Ceiling(parameterValue / roundingNumber) * roundingNumber;
+                    break;
+                case RoundingMethod.Down:
+                    value = Math.Floor(parameterValue / roundingNumber) * roundingNumber;
+                    break;
+                default:
+                    value = Math.Round(parameterValue / roundingNumber) * roundingNumber;
+                    break;
+            }
+            valueRounds.Add(value);
+        }
+        return valueRounds;
+    }
+
+    public static List<double> GetParameterValues(Rebar rebar, RebarRoundingManager rebarRoundingManager)
     {
         var parameterValues = new List<double>();
 
@@ -86,6 +116,6 @@ public static class RebarUtils
             parameterValues.Add(hookLengthEnd.Value);
         }
 
-        return parameterValues;
+        return rebarRoundingManager.RoundingNumber(parameterValues);
     }
 }
