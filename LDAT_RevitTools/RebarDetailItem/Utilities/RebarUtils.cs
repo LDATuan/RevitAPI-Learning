@@ -31,13 +31,10 @@ public static class RebarUtils
                 {
                     var paramId = rebarShapeConstraintSegmentLength.GetParamId();
 
-                    foreach (Parameter parameter in parameters)
-                    {
-                        if (paramId == parameter.Id)
-                        {
-                            parameterValues.Add(parameter.AsDouble());
-                            break;
-                        }
+                    foreach (Parameter parameter in parameters) {
+                        if ( paramId != parameter.Id ) continue ;
+                        parameterValues.Add(parameter.AsDouble());
+                        break;
                     }
                 }
             }

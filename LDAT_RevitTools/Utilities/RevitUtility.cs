@@ -13,6 +13,6 @@ public static class RevitUtility
 
     public static bool IsEqual(this double a, double b)
     {
-        return Math.Abs(a -b) < Precision;
+        return Math.Abs(a - b) < Precision;
     }
 }
