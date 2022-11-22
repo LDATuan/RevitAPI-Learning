@@ -14,35 +14,62 @@ namespace RebarDetailItem.Utilities ;
 
 public static class GeometryUtils
 {
- 
   private static Transform CreateRotation( this Rebar rebar )
   {
     var activeView = rebar.Document.ActiveView ;
+    if ( rebar.IsRebarInSection( activeView ) ) {
+      System.Windows.MessageBox.Show( "rebar in section" ) ;
+    }
+
     var transform = Transform.Identity ;
 
     var normal = rebar.GetShapeDrivenAccessor().Normal ;
     var dotZ = normal.DotProduct( XYZ.BasisZ ) ;
 
+
+    //origin ???
     //view is perpencular with BasixZ
     var vectorRight = activeView.RightDirection ;
     var vectorUp = activeView.UpDirection ;
+
+    var angle = vectorRight.AngleTo( XYZ.BasisX ) ;
     if ( dotZ.IsEqual( 0 ) ) {
-      transform = Transform.CreateRotation( vectorRight, Math.PI / 2 ) * transform ;
+      transform = Transform.CreateRotation( vectorRight, -Math.PI / 2 ) * transform ;
+      var dotx = vectorRight.DotProduct( XYZ.BasisX ) ;
+      var doty = vectorRight.DotProduct( XYZ.BasisY ) ;
+
+      double newAngle = angle ;
+      if ( dotx > 0 && doty > 0 ) {
+        newAngle = -angle ;
+      }
+      else if ( dotx < 0 && doty > 0 ) {
+        newAngle = angle + Math.PI / 2 ;
+      }
+      else if ( dotx > 0 && doty < 0  ) {
+        newAngle = angle ;
+      }
+      else {
+        newAngle = -( angle + Math.PI / 2 );
+      }
+      transform = Transform.CreateRotation( XYZ.BasisZ, newAngle ) * transform ;
     }
-    
+    //
+    // var bb = rebar.get_BoundingBox( null ) ;
+    // transform.Origin = bb.Min ;
+
     return transform ;
   }
 
-  private static Transform CreateTranslate(this Rebar rebar)
+  private static Transform CreateTranslate( this Rebar rebar )
   {
     var bb = rebar.get_BoundingBox( null ) ;
-    
+
     var transform = Transform.Identity ;
-    transform = Transform.CreateTranslation(XYZ.Zero - bb.Min)*transform;
-    
+    transform = Transform.CreateTranslation( XYZ.Zero - bb.Min ) * transform ;
+
     return transform ;
   }
-  
+
   public static List<Curve> GetCurves( this Rebar rebar )
   {
     var curves = rebar.GetCenterlineCurves( false, false, false, MultiplanarOption.IncludeOnlyPlanarCurves, 0 ) ;
@@ -51,7 +78,7 @@ public static class GeometryUtils
     for ( int i = 0 ; i < curves.Count ; i++ ) {
       curves[ i ] = curves[ i ].CreateTransformed( translate ) ;
     }
-    
+
     var transform = rebar.CreateRotation() ;
 
 
@@ -59,7 +86,7 @@ public static class GeometryUtils
       curves[ i ] = curves[ i ].CreateTransformed( transform ) ;
     }
 
-    
+
     return curves.ToList() ;
   }
 
