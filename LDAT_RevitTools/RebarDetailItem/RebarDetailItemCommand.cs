@@ -2,6 +2,7 @@
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
+using Autodesk.Revit.UI.Selection;
 using RebarDetailItem.Utilities;
 using System;
 using System.Collections.Generic;
@@ -19,14 +20,20 @@ public class RebarDetailItemCommand : IExternalCommand
         var application = commandData.Application.Application;
         var document = uiDocument.Document;
 
-        var refele = uiDocument.Selection.PickObject(Autodesk.Revit.UI.Selection.ObjectType.Element);
+        var refele = uiDocument.Selection.PickObject(ObjectType.Element);
 
         var ele = document.GetElement(refele) as Rebar;
 
-        var curves = ele.GetCurves();
 
-        application.CreateDetailItem( curves ,ele.Id.IntegerValue, document.ActiveView.Id.IntegerValue) ;
+        var curves = ele.GetCurves(out XYZ origin);
 
+        var family = application.CreateDetailItem(document, curves, ele.Id.IntegerValue, document.ActiveView.Id.IntegerValue);
+
+        var pickPoint = uiDocument.Selection.PickPoint();
+
+        var pointInsert = document.ActiveView.PointInsert(origin, pickPoint);
+
+        document.Insert(family, pointInsert);
 
         return Result.Succeeded;
     }
