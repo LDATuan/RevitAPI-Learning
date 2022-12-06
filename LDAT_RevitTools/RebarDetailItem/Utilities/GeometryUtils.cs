@@ -1,16 +1,13 @@
-﻿using Autodesk.Revit.ApplicationServices;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
+using LDATRevitTool.RebarDetailItem.Models;
+using LDATRevitTool.Utilities;
 using Utilities;
 
-namespace RebarDetailItem.Utilities;
+namespace LDATRevitTool.RebarDetailItem.Utilities;
 
 public static class GeometryUtils
 {
@@ -39,7 +36,7 @@ public static class GeometryUtils
             transform = Transform.CreateRotation(vectorRight, -Math.PI / 2) * transform;
             var dotx = vectorRight.DotProduct(XYZ.BasisX);
             var doty = vectorRight.DotProduct(XYZ.BasisY);
-
+            
             double newAngle = angle;
             if (dotx > 0 && doty > 0)
             {
@@ -100,30 +97,32 @@ public static class GeometryUtils
     }
 
 
-    public static List<Curve> GetCurves(this Rebar rebar, out XYZ lowerLeftPoint)
-    {
-        var curves = rebar.GetCenterlineCurves(false, false, false, MultiplanarOption.IncludeOnlyPlanarCurves, 0);
+    //public static List<Curve> GetCurves(this Rebar rebar, out XYZ lowerLeftPoint)
+    //{
+    //    var curves = rebar.GetCenterlineCurves(false, false, false, MultiplanarOption.IncludeOnlyPlanarCurves, 0);
+
+    //    //var rebarInfo = new RebarInfo(rebar);
+
+    //    //lowerLeftPoint = rebar.Document.ActiveView.GetLowerLeftPoint(curves);
+
+        
+    //    ////var rotateTransform = rebarInfo.CreateRotation();
+    //    //var translate = CreateTranslate(lowerLeftPoint);
+
+    //    //for (int i = 0; i < curves.Count; i++)
+    //    //{
+    //    //    curves[i] = curves[i].CreateTransformed(translate);
+    //    //}
 
 
-        lowerLeftPoint = rebar.Document.ActiveView.GetLowerLeftPoint(curves);
 
-        var rotateTransform = rebar.CreateRotation();
-        var translate = CreateTranslate(lowerLeftPoint);
-
-        for (int i = 0; i < curves.Count; i++)
-        {
-            curves[i] = curves[i].CreateTransformed(translate);
-        }
+    //    //for (int i = 0; i < curves.Count; i++)
+    //    //{
+    //    //    curves[i] = curves[i].CreateTransformed(rotateTransform);
+    //    //}
 
 
-
-        for (int i = 0; i < curves.Count; i++)
-        {
-            curves[i] = curves[i].CreateTransformed(rotateTransform);
-        }
-
-
-        return curves.ToList();
-    }
+    //    //return curves.ToList();
+    //}
 }
 

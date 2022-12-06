@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LDATRevitTool.Utilities;
 using Utilities;
 
 namespace RebarDetailItem.Utilities;
@@ -15,21 +16,18 @@ public static class DetailItemUtils
 
     public static XYZ PointInsert(this View view, XYZ origin, XYZ pick)
     {
-        var vertical = Line.CreateUnbound(origin, origin + view.UpDirection);
-        var horizontal = Line.CreateUnbound(pick, pick + view.RightDirection);
 
-        vertical.Intersect(horizontal, out IntersectionResultArray resultArray);
-        var ac = resultArray.get_Item(0);
-        for (int i = 0; i < resultArray.Size; i++)
+
+        XYZ point;
+        if (view.RightDirection.IsParallelTo(XYZ.BasisZ))
         {
-            var a = resultArray.get_Item(i);
-
-            if (a.XYZPoint!=null)
-            {
-                return a.XYZPoint;
-            }
+            point = new XYZ(origin.X, origin.Y, pick.Z);
         }
-        return null;
+        else
+        {
+            point = new XYZ(origin.X, origin.Y, pick.Z);
+        }
+        return point;
     }
 
     public static Family CreateDetailItem(this Application application, Document targetDocument, List<Curve> curves, int idRebar, int IdView)
@@ -71,6 +69,10 @@ public static class DetailItemUtils
         {
             transaction.Start("Insert Detail Item");
             var familySymbol = document.GetElement(family.GetFamilySymbolIds().First()) as FamilySymbol;
+            if (!familySymbol.IsActive)
+            {
+                familySymbol.Activate();
+            }
             document.Create.NewFamilyInstance(point, familySymbol, document.ActiveView);
             transaction.Commit();
         }

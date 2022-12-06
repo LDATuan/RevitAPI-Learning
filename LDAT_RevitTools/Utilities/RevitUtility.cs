@@ -1,12 +1,7 @@
-﻿using Autodesk.Revit.DB;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System;
+using Autodesk.Revit.DB;
 
-namespace Utilities;
+namespace LDATRevitTool.Utilities;
 
 public static class RevitUtility
 {
@@ -16,9 +11,40 @@ public static class RevitUtility
     {
         return Math.Abs(a - b) < Precision;
     }
+
+    public static bool IsGreaterThan(this double a, double b)
+    {
+        return a - b >= Precision;
+    }
+
+    public static bool IsGreater(this double a, double b)
+    {
+        return a - b > Precision;
+    }
+
+    public static bool IsLessThan(this double a, double b)
+    {
+        return a - b <= Precision;
+    }
+    public static bool IsLess(this double a, double b)
+    {
+        return a - b < Precision;
+    }
+
+    public static bool IsSameDirection(this XYZ source, XYZ target)
+    {
+        var dot = source.DotProduct(target);
+        return dot.IsEqual(1);
+    }
+    
+    public static bool IsParallelTo(this XYZ source, XYZ target)
+    {
+        var dot = source.DotProduct(target);
+        return dot.IsEqual(1) || dot.IsEqual(-1);
+    }
 }
 
-class LoadFamilyOption : IFamilyLoadOptions
+public class LoadFamilyOption : IFamilyLoadOptions
 {
     public bool OnFamilyFound(bool familyInUse, out bool overwriteParameterValues)
     {

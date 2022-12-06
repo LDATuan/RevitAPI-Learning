@@ -8,6 +8,8 @@
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
 		<LangVersion>latest</LangVersion>
+		<AssemblyName>LDATRevitTool</AssemblyName>
+		<RootNamespace>LDATRevitTool</RootNamespace>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="$(Configuration.Contains('Debug'))">
@@ -26,6 +28,5 @@
 	<ItemGroup>
 	  <Folder Include="RebarDetailItem\Views\" />
 	  <Folder Include="RebarDetailItem\ViewModels\" />
-	  <Folder Include="RebarDetailItem\Models\" />
 	</ItemGroup>
 </Project>

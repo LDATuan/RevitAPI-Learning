@@ -9,6 +9,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LDATRevitTool.RebarDetailItem.Utilities;
+using LDATRevitTool.Utilities;
+using LDATRevitTool.RebarDetailItem.Models;
 
 [Transaction(TransactionMode.Manual)]
 public class RebarDetailItemCommand : IExternalCommand
@@ -20,18 +23,21 @@ public class RebarDetailItemCommand : IExternalCommand
         var application = commandData.Application.Application;
         var document = uiDocument.Document;
 
-        var refele = uiDocument.Selection.PickObject(ObjectType.Element);
+        var refele = uiDocument.Selection.PickObject(ObjectType.Element, new RebarFilter());
 
         var ele = document.GetElement(refele) as Rebar;
 
+        var rebarInfo = new RebarInfo(ele);
+        var lowerLeftpoint = rebarInfo.GetLowerLeftPoint();
 
-        var curves = ele.GetCurves(out XYZ origin);
 
-        var family = application.CreateDetailItem(document, curves, ele.Id.IntegerValue, document.ActiveView.Id.IntegerValue);
+
+
+        var family = application.CreateDetailItem(document, rebarInfo.Curves, ele.Id.IntegerValue, document.ActiveView.Id.IntegerValue);
 
         var pickPoint = uiDocument.Selection.PickPoint();
 
-        var pointInsert = document.ActiveView.PointInsert(origin, pickPoint);
+        var pointInsert = document.ActiveView.PointInsert(lowerLeftpoint, pickPoint);
 
         document.Insert(family, pointInsert);
 
