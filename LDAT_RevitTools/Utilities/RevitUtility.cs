@@ -42,6 +42,8 @@ public static class RevitUtility
         var dot = source.DotProduct(target);
         return dot.IsEqual(1) || dot.IsEqual(-1);
     }
+    
+    
 }
 
 public class LoadFamilyOption : IFamilyLoadOptions

@@ -3,40 +3,34 @@ using Autodesk.Revit.DB.Structure;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using LDATRevitTool.Utilities;
-using Utilities;
 
-namespace RebarDetailItem.Utilities;
+namespace LDATRevitTool.RebarDetailItem.Utilities;
 
 public static class RebarUtils
 {
-    private static List<double> GetParameterValueFromSegments(RebarShape rebarShape)
+    private static IEnumerable<double> GetParameterValueFromSegments(RebarShape rebarShape)
     {
         var parameterValues = new List<double>();
         var rebarShapeDefinitionBySegments = (RebarShapeDefinitionBySegments)rebarShape.GetRebarShapeDefinition();
 
         var parameters = rebarShape.Parameters;
 
-        for (int i = 0; i < rebarShapeDefinitionBySegments.NumberOfSegments; i++)
+        for (var i = 0; i < rebarShapeDefinitionBySegments.NumberOfSegments; i++)
         {
             var rebarShapeSegment = rebarShapeDefinitionBySegments.GetSegment(i);
 
             var rebarShapeConstraints = rebarShapeSegment.GetConstraints();
 
-            foreach (var rebarShapeConstraint in rebarShapeConstraints)
-            {
-                if (rebarShapeConstraint is RebarShapeConstraintSegmentLength rebarShapeConstraintSegmentLength)
-                {
-                    var paramId = rebarShapeConstraintSegmentLength.GetParamId();
+            foreach (var rebarShapeConstraint in rebarShapeConstraints) {
+                if ( rebarShapeConstraint is not RebarShapeConstraintSegmentLength rebarShapeConstraintSegmentLength )
+                    continue ;
+                var paramId = rebarShapeConstraintSegmentLength.GetParamId();
 
-                    foreach (Parameter parameter in parameters) {
-                        if ( paramId != parameter.Id ) continue ;
-                        parameterValues.Add(parameter.AsDouble());
-                        break;
-                    }
+                foreach (Parameter parameter in parameters) {
+                    if ( paramId != parameter.Id ) continue ;
+                    parameterValues.Add(parameter.AsDouble());
+                    break;
                 }
             }
         }
@@ -63,39 +57,30 @@ public static class RebarUtils
         return (hookLengthStart, hookLengthEnd);
     }
 
-    private static List<double> RoundingNumber(this RebarRoundingManager rebarRoundingManager, List<double> parameterValues)
+    private static void RoundingNumber(this RebarRoundingManager rebarRoundingManager, List<double> parameterValues)
     {
-        var valueRounds = new List<double>();
         var roundingNumber = rebarRoundingManager.ApplicableSegmentLengthRounding;
-        if (roundingNumber.IsEqual(0)) roundingNumber = 1;
+        if (roundingNumber.IsEqual(0)) roundingNumber = 10;
 
-        foreach (var parameterValue in parameterValues)
-        {
-            double value;
-            switch (rebarRoundingManager.ApplicableSegmentLengthRoundingMethod)
+        for ( var i = 0 ; i < parameterValues.Count ; i++ ) {
+            var para = parameterValues[ i ] ;
+            var milliValue = para.Feet2Millimeter() ;
+            var roundedValue = rebarRoundingManager.ApplicableSegmentLengthRoundingMethod switch
             {
-                case RoundingMethod.Nearest:
-                    value = Math.Round(parameterValue / roundingNumber) * roundingNumber;
-                    break;
-                case RoundingMethod.Up:
-                    value = Math.Ceiling(parameterValue / roundingNumber) * roundingNumber;
-                    break;
-                case RoundingMethod.Down:
-                    value = Math.Floor(parameterValue / roundingNumber) * roundingNumber;
-                    break;
-                default:
-                    value = Math.Round(parameterValue / roundingNumber) * roundingNumber;
-                    break;
-            }
-            valueRounds.Add(value);
+                RoundingMethod.Nearest => Math.Round( milliValue / roundingNumber ) * roundingNumber,
+                RoundingMethod.Up => Math.Ceiling( milliValue / roundingNumber ) * roundingNumber,
+                RoundingMethod.Down => Math.Floor( milliValue / roundingNumber ) * roundingNumber,
+                _ => Math.Round( milliValue / roundingNumber ) * roundingNumber
+            } ;
+            parameterValues[ i ] = roundedValue.Millimeter2Feet() ;
         }
-        return valueRounds;
     }
 
-    public static List<double> GetParameterValues(Rebar rebar, RebarRoundingManager rebarRoundingManager)
+    public static List<double> GetParameterValues(this Rebar rebar)
     {
         var parameterValues = new List<double>();
 
+        var rebarRoundingManager = rebar.GetReinforcementRoundingManager() ;
         var document = rebar.Document;
 
         var rebarShape = (RebarShape)document.GetElement(rebar.GetShapeId());
@@ -113,7 +98,7 @@ public static class RebarUtils
         {
             parameterValues.Add(hookLengthEnd.Value);
         }
-
-        return rebarRoundingManager.RoundingNumber(parameterValues);
+        rebarRoundingManager.RoundingNumber(parameterValues);
+        return parameterValues ;
     }
 }

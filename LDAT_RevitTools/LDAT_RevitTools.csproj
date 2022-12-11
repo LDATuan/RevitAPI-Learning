@@ -26,6 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="RebarDetailItem\Data\Revit 2020" />
 	  <Folder Include="RebarDetailItem\Views\" />
 	  <Folder Include="RebarDetailItem\ViewModels\" />
 	</ItemGroup>
