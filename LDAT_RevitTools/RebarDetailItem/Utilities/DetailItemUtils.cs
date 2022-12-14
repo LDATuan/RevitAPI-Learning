@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Autodesk.Revit.UI;
 using LDATRevitTool.RebarDetailItem.Models;
 using LDATRevitTool.Utilities;
 using Utilities;
@@ -14,10 +15,8 @@ namespace LDATRevitTool.RebarDetailItem.Utilities;
 
 public static class DetailItemUtils
 {
-    public static XYZ PointInsert(this View view, Outline outlineRebar, XYZ pick)
+    private static XYZ PointInsert(this View view, Outline outlineRebar, XYZ pickPoint)
     {
-        XYZ point;
-
         var origin = outlineRebar.MinimumPoint;
         var rightDirection = view.RightDirection;
         var upDirection = view.UpDirection;
@@ -27,29 +26,33 @@ public static class DetailItemUtils
 
         var minUp = outlineRebar.MinimumPoint.DotProduct(upDirection);
 
-        var originUp = origin.DotProduct(upDirection);
-        var originRight = origin.DotProduct(rightDirection);
-
-
-        if (view.UpDirection.IsParallelTo(XYZ.BasisZ))
-        {
-            if (originRight >= minRight && originRight <= maxRight)
-            {
-                point = new XYZ(origin.X, pick.Y, pick.Z);
+        var originUp = pickPoint.DotProduct(upDirection);
+        var pickPointRight = pickPoint.DotProduct(rightDirection);
+        
+        XYZ point;
+        
+        if (view.UpDirection.IsParallelTo(XYZ.BasisZ)) {
+            if (pickPointRight >= minRight && pickPointRight <= maxRight) {
+                point = new XYZ(origin.X, origin.Y, pickPoint.Z);
                 return point;
             }
-            else
-            {
-                point = new XYZ(pick.X, pick.Y, origin.Z);
+
+            point = new XYZ(pickPoint.X, pickPoint.Y, origin.Z);
+            return point;
+        }
+
+        if (view.ViewDirection.IsParallelTo(XYZ.BasisZ)) {
+            if (pickPointRight >= minRight && pickPointRight <= maxRight) {
+                point = new XYZ(origin.X, pickPoint.Y, pickPoint.Z);
                 return point;
             }
-        }
-        else
-        {
+
+            point = new XYZ(pickPoint.X, origin.Y, pickPoint.Z);
+            return point;
         }
 
 
-        return pick;
+        return pickPoint;
     }
 
     public static Family CreateDetailItem(this Application application, Document targetDocument, RebarInfo rebarInfo)
@@ -59,7 +62,7 @@ public static class DetailItemUtils
 
         const string path =
             "D:\\3. TUAN LE\\01. Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa";
-        
+
         var familyDocument = application.OpenDocumentFile(path);
 
         var factory = familyDocument.FamilyCreate;
@@ -68,16 +71,13 @@ public static class DetailItemUtils
 
         var textNoteInfo = new TextNoteInfo(familyDocument, refLevelView);
 
-        using (var transaction = new Transaction(familyDocument))
-        {
+        using (var transaction = new Transaction(familyDocument)) {
             transaction.Start("Create Detail Item");
 
             var index = 0;
-            foreach (var curve in rebarInfo.Curves)
-            {
-                if (curve is Line line)
-                {
-                    textNoteInfo.Insert(line, rebarInfo.ParameterValues[index]);
+            foreach (var curve in rebarInfo.Curves) {
+                if (curve is Line line) {
+                    textNoteInfo.Insert(line, rebarInfo.ParameterValues[ index ]);
                     index++;
                 }
 
@@ -98,21 +98,31 @@ public static class DetailItemUtils
         return family;
     }
 
-    public static void Insert(this Document document, Family family, XYZ point)
+    public static void Insert(this UIDocument uiDocument, Family family, Outline outline)
     {
-        if (document.GetElement(family.GetFamilySymbolIds().FirstOrDefault()) is not FamilySymbol familySymbol)
-        {
+        var document = uiDocument.Document;
+        if (document.GetElement(family.GetFamilySymbolIds().FirstOrDefault()) is not FamilySymbol familySymbol) {
             return;
         }
 
         using Transaction transaction = new(document);
         transaction.Start("Insert Detail Item");
-        if (!familySymbol.IsActive)
-        {
+
+        var view = document.ActiveView;
+        var plane = Plane.CreateByNormalAndOrigin(view.ViewDirection, view.Origin);
+        var sketchPlane = SketchPlane.Create(document, plane);
+        document.ActiveView.SketchPlane = sketchPlane;
+
+        var pickPoint = uiDocument.Selection.PickPoint();
+
+        if (!familySymbol.IsActive) {
             familySymbol.Activate();
         }
 
-        document.Create.NewFamilyInstance(point, familySymbol, document.ActiveView);
+        var point = view.PointInsert(outline, pickPoint);
+
+        document.Create.NewFamilyInstance(point, familySymbol, view);
+
         transaction.Commit();
     }
 }

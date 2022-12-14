@@ -31,12 +31,8 @@ public class RebarDetailItemCommand : IExternalCommand
         var detailItemInfo = new DetailItemInfo(application, rebarInfo);
         var family = detailItemInfo.CreateOrUpdate();
 
-        if (detailItemInfo.IsFamilyInProject) return Result.Succeeded;
-        var pickPoint = uiDocument.Selection.PickPoint();
-
-        var pointInsert = document.ActiveView.PointInsert(outline, pickPoint);
-
-        document.Insert(family, pointInsert);
+        // if (detailItemInfo.IsFamilyInProject) return Result.Succeeded;
+        uiDocument.Insert(family, outline);
 
         return Result.Succeeded;
     }

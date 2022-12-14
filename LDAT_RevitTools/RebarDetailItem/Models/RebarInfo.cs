@@ -10,6 +10,7 @@ namespace LDATRevitTool.RebarDetailItem.Models;
 
 public class RebarInfo
 {
+    private readonly IEnumerable<Curve> _curves;
     public View CurrentView { get; }
 
     public Rebar Rebar { get; }
@@ -29,20 +30,18 @@ public class RebarInfo
         this.Normal = rebar.GetShapeDrivenAccessor().Normal;
         this.ParameterValues = rebar.GetParameterValues();
 
-        this.Curves = rebar.GetCenterlineCurves(false, false, false, MultiplanarOption.IncludeOnlyPlanarCurves, 0)
-            .ToList();
+        _curves = rebar.GetCenterlineCurves(false , false , false , MultiplanarOption.IncludeOnlyPlanarCurves , 0);
+        this.Curves = _curves.ToList();
         this.FindRightDirection();
         this.TransformCurves();
     }
 
     private void FindRightDirection()
     {
-        if (this.Normal.IsParallelTo(XYZ.BasisZ))
-        {
+        if (this.Normal.IsParallelTo(XYZ.BasisZ)) {
             this.RightDirection = this.Normal.IsSameDirection(XYZ.BasisZ) ? XYZ.BasisX : -XYZ.BasisX;
         }
-        else
-        {
+        else {
             this.RightDirection = XYZ.BasisZ.CrossProduct(this.Normal);
         }
     }
@@ -57,12 +56,11 @@ public class RebarInfo
         return transform;
     }
 
-    private double FindAngle(XYZ vector1, XYZ vector2)
+    private double FindAngle(XYZ vector1 , XYZ vector2)
     {
         var dotAngle = vector1.DotProduct(vector2);
         var angle = vector1.AngleTo(vector2);
-        if (angle != 0)
-        {
+        if (angle != 0) {
             //var newAngle = angle.IsLessThan(Math.PI / 2) ? -angle : -(Math.PI - angle);
             var newAngle = -angle;
 
@@ -84,16 +82,14 @@ public class RebarInfo
         var transform = Transform.Identity;
         var vectorRight = XYZ.BasisZ.CrossProduct(this.Normal);
 
-        var angleZ = FindAngle(Normal, XYZ.BasisZ);
-        if (angleZ != 0)
-        {
-            transform = Transform.CreateRotation(vectorRight, angleZ) * transform;
+        var angleZ = FindAngle(Normal , XYZ.BasisZ);
+        if (angleZ != 0) {
+            transform = Transform.CreateRotation(vectorRight , angleZ) * transform;
         }
 
-        var angleX = FindAngle(CurrentView.RightDirection, XYZ.BasisX);
-        if (angleX != 0)
-        {
-            transform = Transform.CreateRotation(XYZ.BasisZ, angleX) * transform;
+        var angleX = FindAngle(CurrentView.RightDirection , XYZ.BasisX);
+        if (angleX != 0) {
+            transform = Transform.CreateRotation(XYZ.BasisZ , angleX) * transform;
         }
 
         return transform;
@@ -104,45 +100,39 @@ public class RebarInfo
         var rotation = this.CreateRotation();
         var translation = this.CreateTranslation();
 
-        for (var i = 0; i < Curves.Count; i++)
-        {
-            Curves[i] = Curves[i].CreateTransformed(translation);
-            Curves[i] = Curves[i].CreateTransformed(rotation);
+        for (var i = 0 ; i < Curves.Count ; i++) {
+            Curves[ i ] = Curves[ i ].CreateTransformed(translation);
+            Curves[ i ] = Curves[ i ].CreateTransformed(rotation);
         }
     }
 
     public Outline GetOutLineRebar()
     {
-        var bb = CurrentView.get_BoundingBox(null);
-        var bbMin = bb.Min;
+        var rightDirection = CurrentView.RightDirection;
 
         var points = new List<XYZ>();
-
-        points.AddRange(this.Curves.Select(c => c.GetEndPoint(0)).ToList());
-        points.AddRange(this.Curves.Select(c => c.GetEndPoint(1)).ToList());
+        points.AddRange(_curves.Select(c => c.GetEndPoint(0)).ToList());
+        points.AddRange(_curves.Select(c => c.GetEndPoint(1)).ToList());
 
         var minDistance = double.MaxValue;
-        var maxDistance = 0.0;
+        var maxDistance = double.MinValue;
         var minPoint = XYZ.Zero;
         var maxPoint = XYZ.Zero;
-        foreach (var point in points)
-        {
-            var distance = point.DistanceTo(bbMin);
-            if (distance <= minDistance)
-            {
+        foreach (var point in points) {
+            var dot = point.DotProduct(rightDirection);
+            if (dot <= minDistance) {
                 minPoint = point;
-                minDistance = distance;
+                minDistance = dot;
             }
 
-            if (distance > maxDistance)
-            {
+            if (dot > maxDistance) {
                 maxPoint = point;
-                maxDistance = distance;
+                maxDistance = dot;
             }
         }
 
-        var outLine = new Outline(minPoint, maxPoint);
-        
+        var outLine = new Outline(minPoint , maxPoint);
+
         return outLine;
     }
 }

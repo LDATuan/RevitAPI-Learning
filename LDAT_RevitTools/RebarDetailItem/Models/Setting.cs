@@ -2,6 +2,6 @@
 
 public static class Setting
 {
-  public const double Offset = 200 ;
+  public const double Offset = 100 ;
   public const string LengthTagFamily = "Length Tag" ;
 }
