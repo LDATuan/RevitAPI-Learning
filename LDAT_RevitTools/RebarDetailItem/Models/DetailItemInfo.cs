@@ -54,9 +54,13 @@ public class DetailItemInfo
 			transaction.Commit() ;
 		}
 		else {
-			const string path =
-				"D:\\Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa" ;
+			// const string path =
+			// 	"D:\\Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa" ;
 
+			const string path =
+				"D:\\3. TUAN LE\\01. Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa";
+			
+			
 			familyDocument = _application.OpenDocumentFile( path ) ;
 		}
 
