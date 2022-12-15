@@ -7,9 +7,10 @@ namespace LDATRevitTool.RebarDetailItem.Models;
 
 public class TextNoteInfo
 {
+    private const double OffSet = Setting.Offset;
+
     private readonly Document _documentFam;
     private readonly View _currentView;
-    private const double OffSet = Setting.Offset;
     private readonly FamilySymbol _familySymbol;
 
     public TextNoteInfo(Document documentFam, View view)
@@ -20,7 +21,7 @@ public class TextNoteInfo
             new FilteredElementCollector(documentFam).OfClass(typeof(FamilySymbol)).FirstElement() as FamilySymbol;
     }
 
-    public void Insert(Line line, double length)
+    public void Insert(Line line, double length, bool isSameViewDirection = true)
     {
         var direction = line.Direction;
 
@@ -32,28 +33,34 @@ public class TextNoteInfo
         var angle = direction.AngleTo(XYZ.BasisX);
         angle = angle.IsEqual(Math.PI) ? 0 : angle;
 
-        if (direction.IsParallelTo(XYZ.BasisX)) {
-            var index = direction.IsSameDirection((XYZ.BasisX)) ? 1 : -1;
+        if (direction.IsParallelTo(XYZ.BasisX))
+        {
+            var index = direction.IsSameDirection((XYZ.BasisX)) && !isSameViewDirection ? 1 : -1;
             midPoint += index * offset * XYZ.BasisY;
         }
-        else if (direction.IsParallelTo(XYZ.BasisY)) {
-            var index = direction.IsSameDirection((XYZ.BasisY)) ? -1 : 1;
+        else if (direction.IsParallelTo(XYZ.BasisY))
+        {
+            var index = direction.IsSameDirection((XYZ.BasisY)) && isSameViewDirection ? -1 : 1;
             midPoint += index * offset * XYZ.BasisX;
         }
-        else {
-            if (startPoint.Y.IsGreaterThan(endPoint.Y)) {
+        else
+        {
+            if (startPoint.Y.IsGreaterThan(endPoint.Y))
+            {
                 angle = -angle;
                 midPoint += offset * XYZ.BasisX + offset * XYZ.BasisY;
             }
-            else {
+            else
+            {
                 midPoint += -offset * XYZ.BasisX + offset * XYZ.BasisY;
             }
         }
 
         var textNote = _documentFam.FamilyCreate.NewFamilyInstance(midPoint, _familySymbol, _currentView);
         textNote.LookupParameter("Length").Set(length);
-        
-        if (angle != 0) {
+
+        if (angle != 0)
+        {
             var axis = Line.CreateBound(midPoint, midPoint + XYZ.BasisZ);
             ElementTransformUtils.RotateElement(_documentFam, textNote.Id, axis, angle);
         }

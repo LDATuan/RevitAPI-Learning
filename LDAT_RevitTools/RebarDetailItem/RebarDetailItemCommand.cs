@@ -3,12 +3,6 @@ using Autodesk.Revit.DB;
 using Autodesk.Revit.DB.Structure;
 using Autodesk.Revit.UI;
 using Autodesk.Revit.UI.Selection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using LDATRevitTool.RebarDetailItem.Utilities;
 using LDATRevitTool.Utilities;
 using LDATRevitTool.RebarDetailItem.Models;
 
@@ -26,13 +20,8 @@ public class RebarDetailItemCommand : IExternalCommand
         var ele = document.GetElement(refElement) as Rebar;
 
         var rebarInfo = new RebarInfo(ele);
-        var outline = rebarInfo.GetOutLineRebar();
-
-        var detailItemInfo = new DetailItemInfo(application, rebarInfo);
-        var family = detailItemInfo.CreateOrUpdate();
-
-        // if (detailItemInfo.IsFamilyInProject) return Result.Succeeded;
-        uiDocument.Insert(family, outline);
+        var detailItemInfo = new DetailItemInfo(commandData.Application, rebarInfo);
+        detailItemInfo.Insert();
 
         return Result.Succeeded;
     }
