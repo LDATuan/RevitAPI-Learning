@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Autodesk.Revit.DB;
@@ -10,20 +11,23 @@ namespace LDATRevitTool.RebarDetailItem.Models;
 
 public class DetailItemInfo
 {
+    private const string RebarShapeName = "T_RebarShape2D_";
+
     private readonly UIApplication _uiApplication;
-    private readonly RebarInfo _rebarInfo;
+    private readonly RebarShapeInfo _rebarShapeInfo;
     private readonly Document _document;
     private readonly string _name;
 
     private Family _familyInProject;
     private bool IsFamilyInProject { get; set; }
 
-    public DetailItemInfo(UIApplication uiApplication, RebarInfo rebarInfo)
+    public DetailItemInfo(UIApplication uiApplication, RebarShapeInfo rebarShapeInfo)
     {
         _uiApplication = uiApplication;
-        _rebarInfo = rebarInfo;
-        _document = rebarInfo.Rebar.Document;
-        _name = "RebarId_" + rebarInfo.Rebar.Id + "_viewId_" + rebarInfo.CurrentView.Id;
+        _rebarShapeInfo = rebarShapeInfo;
+        _document = rebarShapeInfo.Rebar.Document;
+        var shape2DId = rebarShapeInfo.Rebar.Id.IntegerValue + rebarShapeInfo.CurrentView.Id.IntegerValue;
+        _name = RebarShapeName + shape2DId;
         IsFamilyInProject = CheckFamilyInProject();
     }
 
@@ -35,12 +39,11 @@ public class DetailItemInfo
         {
             return false;
         }
-        else
-        {
-            _familyInProject = (Family)element;
-            return true;
-        }
+
+        _familyInProject = (Family)element;
+        return true;
     }
+
 
     private Document GetFamilyDocument()
     {
@@ -59,11 +62,11 @@ public class DetailItemInfo
         }
         else
         {
-            // const string path =
-            // 	"D:\\Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa" ;
-
             const string path =
-                "D:\\3. TUAN LE\\01. Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa";
+                "D:\\Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa";
+
+            // const string path =
+            //     "D:\\3. TUAN LE\\01. Github\\RevitAPI-Learning\\LDAT_RevitTools\\RebarDetailItem\\Data\\Revit 2020\\Metric Detail Item.rfa";
 
 
             familyDocument = _uiApplication.Application.OpenDocumentFile(path);
@@ -74,8 +77,8 @@ public class DetailItemInfo
 
     private XYZ PointInsert(XYZ pickPoint)
     {
-        var outlineRebar = _rebarInfo.Outline;
-        var view = _rebarInfo.CurrentView;
+        var outlineRebar = _rebarShapeInfo.Outline;
+        var view = _rebarShapeInfo.CurrentView;
 
         var origin = outlineRebar.MinimumPoint;
         var rightDirection = view.RightDirection;
@@ -115,7 +118,6 @@ public class DetailItemInfo
             return point;
         }
 
-
         return pickPoint;
     }
 
@@ -126,29 +128,28 @@ public class DetailItemInfo
         var refLevelView = new FilteredElementCollector(familyDocument).OfClass(typeof(View)).Cast<View>()
             .First(x => x.Name == "Ref. Level");
 
-        var textNoteInfo = new TextNoteInfo(familyDocument, refLevelView);
+        var textNoteInfo = new TextNoteInfo(familyDocument, refLevelView, _rebarShapeInfo.RebarStyle);
 
         using (var transaction = new Transaction(familyDocument))
         {
             transaction.Start("Create Detail Item");
 
             var index = 0;
-            var isSameViewDirection = _rebarInfo.CurrentView.ViewDirection.IsSameDirection(_rebarInfo.Normal);
-            foreach (var curve in _rebarInfo.Curves)
+            foreach (var curve in _rebarShapeInfo.Curves)
             {
                 if (curve is Line line)
                 {
-                    if (_rebarInfo.RebarStyle == RebarStyle.Standard)
+                    if (_rebarShapeInfo.RebarStyle == RebarStyle.Standard)
                     {
-                        textNoteInfo.Insert(line, _rebarInfo.ParameterValues[index]);
+                        textNoteInfo.Insert(line, _rebarShapeInfo.ParameterValues[index]);
                         index++;
                     }
                     else
                     {
-                        if (!(_rebarInfo.ParameterValues.Count == 6 &&
+                        if (!(_rebarShapeInfo.ParameterValues.Count == 6 &&
                               index == 5))
                         {
-                            textNoteInfo.Insert(line, _rebarInfo.ParameterValues[index], isSameViewDirection);
+                            textNoteInfo.Insert(line, _rebarShapeInfo.ParameterValues[index]);
                             index++;
                         }
                     }
@@ -162,7 +163,16 @@ public class DetailItemInfo
 
         var option = new SaveAsOptions() { OverwriteExistingFile = true, MaximumBackups = 1 };
         var fileName = this._name + ".rfa";
-        familyDocument.SaveAs(Path.Combine(@"D:\Workspace\Temp\Revit", fileName), option);
+
+        var tempFolder = Path.GetTempPath();
+        var detailItemFolderName = "Detail Item Folder";
+        var detailFolder = Path.Combine(tempFolder, detailItemFolderName);
+        if (!Directory.Exists(detailFolder))
+        {
+            Directory.CreateDirectory(detailFolder);
+        }
+
+        familyDocument.SaveAs(Path.Combine(detailFolder, fileName), option);
 
         var family = familyDocument.LoadFamily(_document, new LoadFamilyOption());
 
@@ -171,7 +181,7 @@ public class DetailItemInfo
         return family;
     }
 
-    public void Insert()
+    public bool Insert()
     {
         var uiDocument = _uiApplication.ActiveUIDocument;
         var document = uiDocument.Document;
@@ -180,28 +190,65 @@ public class DetailItemInfo
 
         if (document.GetElement(family.GetFamilySymbolIds().FirstOrDefault()) is not FamilySymbol familySymbol)
         {
-            return;
+            return false;
         }
 
-        using Transaction transaction = new(document);
-        transaction.Start("Insert Detail Item");
-
-        var view = document.ActiveView;
-        var plane = Plane.CreateByNormalAndOrigin(view.ViewDirection, view.Origin);
-        var sketchPlane = SketchPlane.Create(document, plane);
-        document.ActiveView.SketchPlane = sketchPlane;
-
-        var pickPoint = uiDocument.Selection.PickPoint();
-
-        if (!familySymbol.IsActive)
+        using (var transactionGroup = new TransactionGroup(_document))
         {
-            familySymbol.Activate();
+            transactionGroup.Start("Detail Iterm");
+
+            FamilyInstance detailItem = null;
+            using (Transaction transaction = new(document))
+            {
+                transaction.Start("Insert Detail Item");
+
+                var view = document.ActiveView;
+                var plane = Plane.CreateByNormalAndOrigin(view.ViewDirection, view.Origin);
+                if (document.ActiveView.SketchPlane == null)
+                {
+                    var sketchPlane = SketchPlane.Create(document, plane);
+                    document.ActiveView.SketchPlane = sketchPlane;
+                }
+
+                XYZ pickPoint;
+                try
+                {
+                    pickPoint = uiDocument.Selection.PickPoint();
+                }
+                catch
+                {
+                    return false;
+                }
+
+                if (!familySymbol.IsActive)
+                {
+                    familySymbol.Activate();
+                }
+
+                var point = PointInsert(pickPoint);
+
+                detailItem = document.Create.NewFamilyInstance(point, familySymbol, view);
+                transaction.Commit();
+            }
+
+            if (detailItem == null)
+            {
+                return false;
+            }
+
+            using (var transaction = new Transaction(_document))
+            {
+                transaction.Start("Insert tag");
+
+                var tagInfo = new TagInfo(_document, detailItem, "Type & Number", _rebarShapeInfo.Reference,
+                    _rebarShapeInfo.CurrentView);
+                tagInfo.Insert();
+                transaction.Commit();
+            }
+
+            transactionGroup.Assimilate();
         }
 
-        var point = PointInsert(pickPoint);
-
-        document.Create.NewFamilyInstance(point, familySymbol, view);
-
-        transaction.Commit();
+        return true;
     }
 }

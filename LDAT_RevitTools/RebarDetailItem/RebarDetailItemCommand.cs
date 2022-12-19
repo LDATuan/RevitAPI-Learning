@@ -12,17 +12,16 @@ public class RebarDetailItemCommand : IExternalCommand
     public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
     {
         var uiDocument = commandData.Application.ActiveUIDocument;
-        var application = commandData.Application.Application;
         var document = uiDocument.Document;
 
         var refElement = uiDocument.Selection.PickObject(ObjectType.Element, new RebarFilter());
 
         var ele = document.GetElement(refElement) as Rebar;
 
-        var rebarInfo = new RebarInfo(ele);
-        var detailItemInfo = new DetailItemInfo(commandData.Application, rebarInfo);
-        detailItemInfo.Insert();
+        var rebarShapeInfo = new RebarShapeInfo(ele);
+        var detailItemInfo = new DetailItemInfo(commandData.Application, rebarShapeInfo);
+        var isSuccess = detailItemInfo.Insert();
 
-        return Result.Succeeded;
+        return isSuccess ? Result.Succeeded : Result.Cancelled;
     }
 }

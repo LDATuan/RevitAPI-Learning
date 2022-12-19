@@ -8,15 +8,16 @@ using LDATRevitTool.Utilities;
 
 namespace LDATRevitTool.RebarDetailItem.Models;
 
-public class RebarInfo
+public class RebarShapeInfo
 {
     private readonly IEnumerable<Curve> _curves;
     public View CurrentView { get; }
 
     public Rebar Rebar { get; }
 
+    public Reference Reference { get;  }
     public RebarStyle RebarStyle { get; }
-    
+
     public XYZ Normal { get; }
 
     public XYZ RightDirection { get; set; }
@@ -27,12 +28,13 @@ public class RebarInfo
 
     public List<double> ParameterValues { get; }
 
-    public RebarInfo(Rebar rebar)
+    public RebarShapeInfo(Rebar rebar)
     {
         _curves = rebar.GetCenterlineCurves(false, false, false, MultiplanarOption.IncludeOnlyPlanarCurves, 0);
 
         CurrentView = rebar.Document.ActiveView;
         this.Rebar = rebar;
+        this.Reference = new Reference(rebar);
         this.RebarStyle = (RebarStyle)rebar.get_Parameter(BuiltInParameter.REBAR_ELEM_HOOK_STYLE).AsInteger();
         this.Normal = rebar.GetShapeDrivenAccessor().Normal;
         this.ParameterValues = rebar.GetParameterValues();
@@ -84,7 +86,7 @@ public class RebarInfo
                 this.CurrentView.ViewDirection.IsParallelTo(this.Normal) ? this.CurrentView.ViewDirection : Normal,
                 XYZ.BasisZ);
 
-        if (angleZ != 0)
+        if (angleZ != 0 && vectorRight.DotProduct(XYZ.BasisY) != 0)
         {
             transform = Transform.CreateRotation(vectorRight,
                 isSameViewDirection ? -angleZ : angleZ) * transform;

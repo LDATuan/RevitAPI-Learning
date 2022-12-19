@@ -2,7 +2,6 @@
 using Autodesk.Revit.DB.Structure;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using LDATRevitTool.Utilities;
 
 namespace LDATRevitTool.RebarDetailItem.Utilities;
